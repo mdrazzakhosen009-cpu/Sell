@@ -258,10 +258,37 @@ app.post('/api/admin/logo', requireAdmin, upload.single('image'), async(req,res)
 app.post('/api/admin/password', requireAdmin, async(req,res)=>{try{const a=await one('SELECT password_hash FROM admins WHERE id=1');const old=String(req.body.old_password||''),n=String(req.body.new_password||'');if(sha256(old)!==a.password_hash)return res.status(401).json({error:'Current password is incorrect.'});if(n.length<6)return res.status(400).json({error:'New password must be at least 6 characters.'});await exec('UPDATE admins SET password_hash=?,updated_at=? WHERE id=1',[sha256(n),now()]);sessions.clear();res.json({ok:true,login_required:true});}catch{res.status(500).json({error:'Could not change password.'});}});
 
 async function groq(messages, vision=false) {
-  const key=env('GROQ_API_KEY'); if(!key) throw Error('GROQ_API_KEY is not configured.');
-  const model=env('GROQ_MODEL') || (vision ? 'meta-llama/llama-4-scout-17b-16e-instruct' : 'meta-llama/llama-4-scout-17b-16e-instruct');
-  const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model,temperature:.15,messages})});
-  if(!r.ok) throw Error(`Groq API returned ${r.status}.`); const j=await r.json(); return j.choices?.[0]?.message?.content||'';
+  const key = env('GROQ_API_KEY');
+  if (!key) throw Error('GROQ_API_KEY is not configured.');
+
+  const model = vision
+    ? (env('GROQ_VISION_MODEL') || 'qwen/qwen3.6-27b')
+    : (env('GROQ_MODEL') || 'openai/gpt-oss-120b');
+
+  const r = await fetch(
+    'https://api.groq.com/openai/v1/chat/completions',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.15,
+        messages
+      })
+    }
+  );
+
+  if (!r.ok) {
+    const errorText = await r.text();
+    console.error('GROQ ERROR:', r.status, errorText);
+    throw Error(`Groq API returned ${r.status}: ${errorText}`);
+  }
+
+  const j = await r.json();
+  return j.choices?.[0]?.message?.content || '';
 }
 
 app.post('/api/chat', async(req,res)=>{
