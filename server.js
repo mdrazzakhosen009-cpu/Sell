@@ -261,9 +261,11 @@ async function groq(messages, vision=false) {
   const key=env('GROQ_API_KEY'); if(!key) throw Error('GROQ_API_KEY is not configured.');
   const model=env('GROQ_MODEL') || (vision ? 'meta-llama/llama-4-scout-17b-16e-instruct' : 'meta-llama/llama-4-scout-17b-16e-instruct');
   const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model,temperature:.15,messages})});
-  if(!r.ok) throw Error(`Groq API returned ${r.status}.`); const j=await r.json(); return j.choices?.[0]?.message?.content||'';
+if (!r.ok) {
+  const errorText = await r.text();
+  console.error('GROQ ERROR:', r.status, errorText);
+  throw Error(`Groq API returned ${r.status}: ${errorText}`);
 }
-
 app.post('/api/chat', async(req,res)=>{
   try{
     const cfg=await settings();
