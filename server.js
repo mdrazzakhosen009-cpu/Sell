@@ -266,6 +266,7 @@ if (!r.ok) {
   console.error('GROQ ERROR:', r.status, errorText);
   throw Error(`Groq API returned ${r.status}: ${errorText}`);
 }
+  
 app.post('/api/chat', async(req,res)=>{
   try{
     const cfg=await settings();
