@@ -260,7 +260,7 @@ app.post('/api/admin/password', requireAdmin, async(req,res)=>{try{const a=await
  async function groq(messages, vision=false) {
   const key = env('GROQ_API_KEY'); 
   if (!key) throw Error('GROQ_API_KEY is not configured.');
-  const model = vision ? 'llama-3.2-11b-vision-preview' : 'llama-3.3-70b-versatile';
+  const model = vision ? 'llama-3.2-11b-vision-preview' : 'llama-3.1-8b-instant';
   
   const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -276,7 +276,7 @@ app.post('/api/admin/password', requireAdmin, async(req,res)=>{try{const a=await
   
   const j = await r.json(); 
   return j.choices?.[0]?.message?.content || '';
-  }
+ }
   
 app.post('/api/chat', async(req,res)=>{
   try{
