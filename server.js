@@ -257,8 +257,7 @@ app.put('/api/admin/settings', requireAdmin, async(req,res)=>{try{for(const [k,v
 app.post('/api/admin/logo', requireAdmin, upload.single('image'), async(req,res)=>{try{const img=imageData(req.file);await exec(`INSERT INTO settings(key,value,updated_at) VALUES('logo',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at`,[img,now()]);res.json({ok:true});}catch(e){res.status(400).json({error:e.message});}});
 app.post('/api/admin/password', requireAdmin, async(req,res)=>{try{const a=await one('SELECT password_hash FROM admins WHERE id=1');const old=String(req.body.old_password||''),n=String(req.body.new_password||'');if(sha256(old)!==a.password_hash)return res.status(401).json({error:'Current password is incorrect.'});if(n.length<6)return res.status(400).json({error:'New password must be at least 6 characters.'});await exec('UPDATE admins SET password_hash=?,updated_at=? WHERE id=1',[sha256(n),now()]);sessions.clear();res.json({ok:true,login_required:true});}catch{res.status(500).json({error:'Could not change password.'});}});
 
-async function groq(messages, vision=false) {
-  async function groq(messages, vision=false) {
+ async function groq(messages, vision=false) {
   const key = env('GROQ_API_KEY'); 
   if (!key) throw Error('GROQ_API_KEY is not configured.');
   const model = vision ? 'llama-3.2-11b-vision-preview' : 'llama-3.3-70b-versatile';
